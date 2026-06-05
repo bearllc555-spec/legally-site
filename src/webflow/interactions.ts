@@ -356,6 +356,7 @@ type ImageRevealTarget = {
   overlay: HTMLElement | null;
   image: HTMLElement;
   mode: "load" | "scroll" | "clip";
+  maxProgress: number;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -369,8 +370,8 @@ function easeOutCubic(t: number) {
 function getRevealProgress(container: HTMLElement) {
   const rect = container.getBoundingClientRect();
   const viewport = window.innerHeight;
-  const start = viewport * 1.05;
-  const end = viewport * 0.05;
+  const start = viewport * 1.2;
+  const end = viewport * -0.05;
   return clamp((start - rect.top) / (start - end), 0, 1);
 }
 
@@ -403,6 +404,7 @@ function initImageReveal(root: ParentNode) {
       overlay,
       image,
       mode: overlay.classList.contains("is-light") ? "load" : "scroll",
+      maxProgress: 0,
     });
     seenImages.add(image);
   });
@@ -410,7 +412,7 @@ function initImageReveal(root: ParentNode) {
   root.querySelectorAll<HTMLElement>(".team_link > img.img").forEach((image) => {
     const container = image.parentElement;
     if (!container || seenImages.has(image)) return;
-    targets.push({ container, overlay: null, image, mode: "clip" });
+    targets.push({ container, overlay: null, image, mode: "clip", maxProgress: 0 });
     seenImages.add(image);
   });
 
@@ -447,7 +449,11 @@ function initImageReveal(root: ParentNode) {
   const update = () => {
     ticking = false;
     for (const target of [...scrollTargets, ...clipTargets]) {
-      applyTarget(target, getRevealProgress(target.container));
+      if (target.maxProgress >= 1) continue;
+      const progress = getRevealProgress(target.container);
+      if (progress <= target.maxProgress) continue;
+      target.maxProgress = progress;
+      applyTarget(target, target.maxProgress);
     }
   };
 
