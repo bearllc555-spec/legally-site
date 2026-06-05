@@ -192,12 +192,16 @@ function injectVersionBadge(root: ParentNode) {
   navbar.appendChild(badge);
 }
 
+const HEADER_TEXT_SELECTOR =
+  ".text-tag, h1, h2, .hero_header .text-base, .header_top .text-base, .opacity-65 .text-base, .cta_description .text-base";
+
 function resetWebflowAnimationStates(root: ParentNode) {
   root.querySelectorAll<HTMLElement>("[style]").forEach((el) => {
     if (
       el.classList.contains("image-bg") ||
       el.classList.contains("parallax-image") ||
-      el.classList.contains("img-parallax")
+      el.classList.contains("img-parallax") ||
+      el.matches(HEADER_TEXT_SELECTOR)
     ) {
       return;
     }
@@ -206,6 +210,145 @@ function resetWebflowAnimationStates(root: ParentNode) {
       el.style.opacity = "1";
     }
   });
+}
+
+type TextRevealGroup = {
+  trigger: HTMLElement;
+  inners: HTMLElement[];
+  onLoad: boolean;
+};
+
+const TEXT_REVEAL_STAGGER_MS = 130;
+const TEXT_REVEAL_LOAD_DELAY_MS = 250;
+
+function wrapTextLine(el: HTMLElement): HTMLElement {
+  const existing = el.parentElement;
+  if (existing?.classList.contains("legally-text-reveal-inner")) {
+    return existing;
+  }
+
+  const mask = document.createElement("div");
+  mask.className = "legally-text-reveal";
+  const inner = document.createElement("div");
+  inner.className = "legally-text-reveal-inner";
+
+  el.parentNode?.insertBefore(mask, el);
+  inner.appendChild(el);
+  mask.appendChild(inner);
+  return inner;
+}
+
+function collectHeaderLines(container: HTMLElement, selectors: string[]) {
+  const inners: HTMLElement[] = [];
+  const seen = new Set<HTMLElement>();
+
+  for (const selector of selectors) {
+    container.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+      if (seen.has(el)) return;
+      seen.add(el);
+      inners.push(wrapTextLine(el));
+    });
+  }
+
+  return inners;
+}
+
+function playTextReveal(inners: HTMLElement[]) {
+  inners.forEach((inner, index) => {
+    window.setTimeout(() => {
+      inner.classList.add("is-visible");
+    }, index * TEXT_REVEAL_STAGGER_MS);
+  });
+}
+
+function initHeaderTextReveal(root: ParentNode) {
+  const groups: TextRevealGroup[] = [];
+
+  const heroContent = root.querySelector<HTMLElement>(".hero_content");
+  if (heroContent) {
+    const inners = collectHeaderLines(heroContent, [
+      ".text-tag",
+      ".hero_header h1",
+      ".hero_header .text-base",
+    ]);
+    if (inners.length) {
+      groups.push({ trigger: heroContent, inners, onLoad: true });
+    }
+  }
+
+  root.querySelectorAll<HTMLElement>(".header_top").forEach((headerTop) => {
+    if (headerTop.closest(".team_head")) return;
+    const inners = collectHeaderLines(headerTop, [
+      ".text-tag",
+      "h1",
+      "h2",
+      ".opacity-65 .text-base",
+    ]);
+    if (inners.length) {
+      groups.push({ trigger: headerTop, inners, onLoad: false });
+    }
+  });
+
+  root.querySelectorAll<HTMLElement>(".testimonial_header").forEach((header) => {
+    const inners = collectHeaderLines(header, [".text-tag", "h2"]);
+    if (inners.length) {
+      groups.push({ trigger: header, inners, onLoad: false });
+    }
+  });
+
+  root.querySelectorAll<HTMLElement>(".team_head").forEach((teamHead) => {
+    const inners = collectHeaderLines(teamHead, [
+      ".header_top .text-tag",
+      ".header_top h2",
+      ":scope > .opacity-65 .text-base",
+    ]);
+    if (inners.length) {
+      groups.push({ trigger: teamHead, inners, onLoad: false });
+    }
+  });
+
+  root.querySelectorAll<HTMLElement>(".location_top").forEach((locationTop) => {
+    const inners = collectHeaderLines(locationTop, [
+      ".text-tag",
+      "h2",
+      ".opacity-65 .text-base",
+    ]);
+    if (inners.length) {
+      groups.push({ trigger: locationTop, inners, onLoad: false });
+    }
+  });
+
+  root.querySelectorAll<HTMLElement>(".cta_title").forEach((ctaTitle) => {
+    const inners = collectHeaderLines(ctaTitle, ["h2", ".cta_description .text-base"]);
+    if (inners.length) {
+      groups.push({ trigger: ctaTitle, inners, onLoad: false });
+    }
+  });
+
+  const scrollGroups = groups.filter((group) => !group.onLoad);
+  const loadGroups = groups.filter((group) => group.onLoad);
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const group = scrollGroups.find((item) => item.trigger === entry.target);
+        if (!group || group.trigger.dataset.textRevealed === "true") return;
+        group.trigger.dataset.textRevealed = "true";
+        playTextReveal(group.inners);
+        observer.unobserve(group.trigger);
+      });
+    },
+    { threshold: 0.2, rootMargin: "0px 0px -8% 0px" },
+  );
+
+  for (const group of scrollGroups) {
+    observer.observe(group.trigger);
+  }
+
+  for (const group of loadGroups) {
+    window.setTimeout(() => playTextReveal(group.inners), TEXT_REVEAL_LOAD_DELAY_MS);
+  }
 }
 
 type ImageRevealTarget = {
@@ -321,6 +464,7 @@ function initImageReveal(root: ParentNode) {
 
 export function initWebflowInteractions(root: ParentNode) {
   resetWebflowAnimationStates(root);
+  initHeaderTextReveal(root);
   initImageReveal(root);
   initNavbarScroll(root);
   initHomeLinks(root);
