@@ -143,7 +143,7 @@ function initForms(root: ParentNode) {
 
 const NAV_OUTLINE_ON_HERO = "rgb(255, 255, 255)";
 const NAV_OUTLINE_SCROLLED = "rgb(1, 58, 51)";
-const NAV_BG_SCROLLED = "rgba(74, 73, 68, 0.306)";
+const NAV_BG_ON_HERO = "#f3eddf";
 
 function setOutlineButtonTheme(button: HTMLElement, color: string) {
   button.style.color = color;
@@ -160,21 +160,19 @@ function initNavbarScroll(root: ParentNode) {
   if (!hero || !navbar || !outlineBtn) return;
 
   const update = () => {
-    const heroHeight = hero.offsetHeight;
-    const threshold = Math.max(heroHeight - 96, 0);
-    const overHero = window.scrollY < threshold;
+    const onHero = window.scrollY > 0;
 
-    if (overHero) {
+    if (onHero) {
+      navbar.style.backgroundColor = NAV_BG_ON_HERO;
+      navbar.style.willChange = "background";
+    } else {
       navbar.style.backgroundColor = "transparent";
       navbar.style.willChange = "";
-    } else {
-      navbar.style.backgroundColor = NAV_BG_SCROLLED;
-      navbar.style.willChange = "background";
     }
 
     setOutlineButtonTheme(
       outlineBtn,
-      overHero ? NAV_OUTLINE_ON_HERO : NAV_OUTLINE_SCROLLED,
+      onHero ? NAV_OUTLINE_SCROLLED : NAV_OUTLINE_ON_HERO,
     );
   };
 

@@ -1,2 +1,2 @@
 /** Increment on every change — see DEPLOYMENT.md */
-export const SITE_VERSION = "v2.7";
+export const SITE_VERSION = "v2.8";
