@@ -125,7 +125,11 @@ let processed = mainHtml
   .replace(/href="\/about-us"/g, 'href="#about"')
   .replace(/href="\/blog"/g, 'href="#blog"')
   .replace(/href="https:\/\/www\.temlis\.com\/[^"]*"/g, 'href="#contact"')
-  .replace(/target="_blank"/g, "");
+  .replace(/target="_blank"/g, "")
+  .replace(
+    /<a href="https:\/\/webflow\.com\/"\s*class="footer_link">Powered by Webflow<\/a>/gi,
+    '<a href="https://998webdesigns.com" class="footer_link">Built by 998 web designs</a>',
+  );
 
 const sectionIds = [
   ["section_services", "services"],
