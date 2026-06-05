@@ -468,28 +468,30 @@ function initImageReveal(root: ParentNode) {
   window.addEventListener("resize", onScroll);
 }
 
+const MAP_ZOOM = 13;
+
 const LOCATION_MAPS = [
   {
     tab: "Tab 1",
     label: "New York City, NY",
-    address: "111 Legal Avenue, Suite 456, New York, NY 10001",
+    query: "World Trade Center, New York, NY",
   },
   {
     tab: "Tab 2",
     label: "Los Angeles, CA",
-    address: "789 Justice Blvd, Floor 3, Los Angeles, CA 90001",
+    query: "789 Justice Blvd, Floor 3, Los Angeles, CA 90001",
   },
   {
     tab: "Tab 3",
     label: "Chicago, IL",
-    address: "456 Law Street, Suite 101, Chicago, IL 60601",
+    query: "456 Law Street, Suite 101, Chicago, IL 60601",
   },
 ] as const;
 
 type LocationMapEntry = (typeof LOCATION_MAPS)[number];
 
-function buildMapEmbedUrl(address: string) {
-  return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=15&ie=UTF8&t=k&output=embed`;
+function buildMapEmbedUrl(query: string) {
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=${MAP_ZOOM}&ie=UTF8&t=k&output=embed`;
 }
 
 function createLocationMap(location: LocationMapEntry) {
@@ -499,7 +501,7 @@ function createLocationMap(location: LocationMapEntry) {
   const iframe = document.createElement("iframe");
   iframe.className = "map-iframe";
   iframe.title = `${location.label} office location`;
-  iframe.src = buildMapEmbedUrl(location.address);
+  iframe.src = buildMapEmbedUrl(location.query);
   iframe.setAttribute("loading", "lazy");
   iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
   iframe.setAttribute("allowfullscreen", "");
