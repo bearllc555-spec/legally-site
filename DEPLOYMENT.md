@@ -1,6 +1,6 @@
 # Legally — deployment
 
-**GitHub:** https://github.com/bearllc555-spec/legally-design
+**GitHub:** https://github.com/bearllc555-spec/legally-site
 
 **Design source:** Editorial serif law firm template (998webdesigns `01-haldwell-law`), rebranded as Legally.
 
