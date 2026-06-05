@@ -226,8 +226,8 @@ function easeOutCubic(t: number) {
 function getRevealProgress(container: HTMLElement) {
   const rect = container.getBoundingClientRect();
   const viewport = window.innerHeight;
-  const start = viewport * 0.95;
-  const end = viewport * 0.25;
+  const start = viewport * 1.05;
+  const end = viewport * 0.05;
   return clamp((start - rect.top) / (start - end), 0, 1);
 }
 
@@ -290,7 +290,7 @@ function initImageReveal(root: ParentNode) {
 
   for (const target of loadTargets) {
     applyTarget(target, 0);
-    const duration = 1400;
+    const duration = 2000;
     const start = performance.now();
     const tick = (now: number) => {
       const step = clamp((now - start) / duration, 0, 1);
