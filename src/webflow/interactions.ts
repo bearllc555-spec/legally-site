@@ -143,6 +143,7 @@ function initForms(root: ParentNode) {
 
 const NAV_OUTLINE_ON_HERO = "rgb(255, 255, 255)";
 const NAV_OUTLINE_SCROLLED = "rgb(1, 58, 51)";
+const NAV_BG_SCROLLED = "rgba(74, 73, 68, 0.306)";
 
 function setOutlineButtonTheme(button: HTMLElement, color: string) {
   button.style.color = color;
@@ -154,13 +155,23 @@ function setOutlineButtonTheme(button: HTMLElement, color: string) {
 
 function initNavbarScroll(root: ParentNode) {
   const hero = root.querySelector<HTMLElement>(".section_hero");
+  const navbar = root.querySelector<HTMLElement>(".navbar");
   const outlineBtn = root.querySelector<HTMLElement>(".button.is-outline.is-tablet");
-  if (!hero || !outlineBtn) return;
+  if (!hero || !navbar || !outlineBtn) return;
 
   const update = () => {
     const heroHeight = hero.offsetHeight;
     const threshold = Math.max(heroHeight - 96, 0);
     const overHero = window.scrollY < threshold;
+
+    if (overHero) {
+      navbar.style.backgroundColor = "transparent";
+      navbar.style.willChange = "";
+    } else {
+      navbar.style.backgroundColor = NAV_BG_SCROLLED;
+      navbar.style.willChange = "background";
+    }
+
     setOutlineButtonTheme(
       outlineBtn,
       overHero ? NAV_OUTLINE_ON_HERO : NAV_OUTLINE_SCROLLED,
@@ -183,10 +194,36 @@ function injectVersionBadge(root: ParentNode) {
   navbar.appendChild(badge);
 }
 
+function clearInlineTransform(el: HTMLElement) {
+  el.style.removeProperty("transform");
+  el.style.removeProperty("-webkit-transform");
+  el.style.removeProperty("-moz-transform");
+  el.style.removeProperty("-ms-transform");
+  el.style.removeProperty("will-change");
+}
+
 function resetWebflowAnimationStates(root: ParentNode) {
-  root.querySelectorAll<HTMLElement>('[style*="opacity:0"]').forEach((el) => {
-    el.style.opacity = "1";
-    el.style.transform = "none";
+  root.querySelectorAll<HTMLElement>("[style]").forEach((el) => {
+    const style = el.getAttribute("style") ?? "";
+    if (style.includes("opacity:0")) {
+      el.style.opacity = "1";
+    }
+    if (
+      style.includes("transform") ||
+      style.includes("scale3d") ||
+      style.includes("translate3d")
+    ) {
+      clearInlineTransform(el);
+    }
+  });
+
+  root.querySelectorAll<HTMLElement>("img.img, .hero_visual img").forEach((el) => {
+    clearInlineTransform(el);
+  });
+
+  // Webflow reveals photos by fading out these white covers on scroll
+  root.querySelectorAll<HTMLElement>(".image-bg").forEach((el) => {
+    el.style.display = "none";
   });
 }
 

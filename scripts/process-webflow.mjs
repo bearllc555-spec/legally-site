@@ -145,10 +145,14 @@ for (const [cls, id] of sectionIds) {
 processed = processed.replace(/\sdata-wf-cart-query="[^"]*"/gi, "");
 processed = processed.replace(/\sdata-wf-bindings="[^"]*"/gi, "");
 
-// Webflow IX sets initial hidden state inline; strip so content is visible without webflow.js
+// Webflow IX inline animation states break layout without webflow.js
 processed = processed.replace(
-  /\sstyle="opacity:0;[^"]*"/gi,
+  /\sstyle="[^"]*(?:opacity:0|scale3d|translate3d|will-change)[^"]*"/gi,
   "",
+);
+processed = processed.replace(
+  /(<div[^>]*class="[^"]*image-bg[^"]*"[^>]*)\sstyle="display:\s*block;?"/gi,
+  "$1",
 );
 
 const output = `<!-- Generated from legally-template.webflow.io — do not edit by hand; re-run scripts/process-webflow.mjs -->

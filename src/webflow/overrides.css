@@ -32,6 +32,19 @@
   vertical-align: top;
 }
 
+/* Webflow parallax images need scroll JS; pin them inside clip containers instead */
+.parallax-image,
+.img-parallax {
+  inset: 0 !important;
+  height: 100% !important;
+  transform: none !important;
+  transform-origin: center center !important;
+}
+
+.image-bg {
+  display: none !important;
+}
+
 .legally-version-badge {
   position: fixed;
   top: 0.9rem;
