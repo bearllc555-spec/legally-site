@@ -32,17 +32,17 @@
   vertical-align: top;
 }
 
-/* Webflow parallax images need scroll JS; pin them inside clip containers instead */
 .parallax-image,
 .img-parallax {
-  inset: 0 !important;
-  height: 100% !important;
-  transform: none !important;
-  transform-origin: center center !important;
+  will-change: transform;
 }
 
 .image-bg {
-  display: none !important;
+  will-change: transform;
+}
+
+.team_link > img.img {
+  will-change: clip-path;
 }
 
 .legally-version-badge {

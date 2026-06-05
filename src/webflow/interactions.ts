@@ -192,41 +192,136 @@ function injectVersionBadge(root: ParentNode) {
   navbar.appendChild(badge);
 }
 
-function clearInlineTransform(el: HTMLElement) {
-  el.style.removeProperty("transform");
-  el.style.removeProperty("-webkit-transform");
-  el.style.removeProperty("-moz-transform");
-  el.style.removeProperty("-ms-transform");
-  el.style.removeProperty("will-change");
-}
-
 function resetWebflowAnimationStates(root: ParentNode) {
   root.querySelectorAll<HTMLElement>("[style]").forEach((el) => {
+    if (
+      el.classList.contains("image-bg") ||
+      el.classList.contains("parallax-image") ||
+      el.classList.contains("img-parallax")
+    ) {
+      return;
+    }
     const style = el.getAttribute("style") ?? "";
     if (style.includes("opacity:0")) {
       el.style.opacity = "1";
     }
-    if (
-      style.includes("transform") ||
-      style.includes("scale3d") ||
-      style.includes("translate3d")
-    ) {
-      clearInlineTransform(el);
+  });
+}
+
+type ImageRevealTarget = {
+  container: HTMLElement;
+  overlay: HTMLElement | null;
+  image: HTMLElement;
+  mode: "load" | "scroll" | "clip";
+};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function easeOutCubic(t: number) {
+  return 1 - (1 - t) ** 3;
+}
+
+function getRevealProgress(container: HTMLElement) {
+  const rect = container.getBoundingClientRect();
+  const viewport = window.innerHeight;
+  const start = viewport * 0.95;
+  const end = viewport * 0.25;
+  return clamp((start - rect.top) / (start - end), 0, 1);
+}
+
+function applyOverlayReveal(overlay: HTMLElement, progress: number) {
+  overlay.style.display = "block";
+  overlay.style.transform = `translate3d(0, ${progress * 100}%, 0)`;
+}
+
+function applyParallaxReveal(image: HTMLElement, progress: number) {
+  const scale = 1.2 - progress * 0.2;
+  image.style.transform = `translate3d(0, 0, 0) scale3d(${scale}, ${scale}, 1)`;
+  image.style.transformOrigin = "50% 100%";
+}
+
+function applyClipReveal(image: HTMLElement, progress: number) {
+  image.style.clipPath = `inset(0 0 ${(1 - progress) * 100}% 0)`;
+}
+
+function initImageReveal(root: ParentNode) {
+  const targets: ImageRevealTarget[] = [];
+  const seenImages = new Set<HTMLElement>();
+
+  root.querySelectorAll<HTMLElement>(".image-bg").forEach((overlay) => {
+    const container = overlay.parentElement;
+    if (!container) return;
+    const image = container.querySelector<HTMLElement>(".parallax-image, .img-parallax, img");
+    if (!image) return;
+    targets.push({
+      container,
+      overlay,
+      image,
+      mode: overlay.classList.contains("is-light") ? "load" : "scroll",
+    });
+    seenImages.add(image);
+  });
+
+  root.querySelectorAll<HTMLElement>(".team_link > img.img").forEach((image) => {
+    const container = image.parentElement;
+    if (!container || seenImages.has(image)) return;
+    targets.push({ container, overlay: null, image, mode: "clip" });
+    seenImages.add(image);
+  });
+
+  const scrollTargets = targets.filter((target) => target.mode === "scroll");
+  const clipTargets = targets.filter((target) => target.mode === "clip");
+  const loadTargets = targets.filter((target) => target.mode === "load");
+
+  const applyTarget = (target: ImageRevealTarget, progress: number) => {
+    if (target.overlay) applyOverlayReveal(target.overlay, progress);
+    if (target.mode === "clip") {
+      applyClipReveal(target.image, progress);
+      return;
     }
-  });
+    applyParallaxReveal(target.image, progress);
+  };
 
-  root.querySelectorAll<HTMLElement>("img.img, .hero_visual img").forEach((el) => {
-    clearInlineTransform(el);
-  });
+  for (const target of [...scrollTargets, ...clipTargets]) {
+    applyTarget(target, 0);
+  }
 
-  // Webflow reveals photos by fading out these white covers on scroll
-  root.querySelectorAll<HTMLElement>(".image-bg").forEach((el) => {
-    el.style.display = "none";
-  });
+  for (const target of loadTargets) {
+    applyTarget(target, 0);
+    const duration = 1400;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const step = clamp((now - start) / duration, 0, 1);
+      applyTarget(target, easeOutCubic(step));
+      if (step < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    for (const target of [...scrollTargets, ...clipTargets]) {
+      applyTarget(target, getRevealProgress(target.container));
+    }
+  };
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  };
+
+  update();
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
 }
 
 export function initWebflowInteractions(root: ParentNode) {
   resetWebflowAnimationStates(root);
+  initImageReveal(root);
   initNavbarScroll(root);
   initHomeLinks(root);
   initAnchorLinks(root);
