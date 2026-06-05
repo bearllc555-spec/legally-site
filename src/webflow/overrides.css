@@ -65,6 +65,13 @@
   opacity: 1;
 }
 
+.location_map-tilt-wrap {
+  position: absolute;
+  inset: 0%;
+  overflow: hidden;
+  perspective: 1100px;
+}
+
 .location_map-embed {
   border: 0;
   width: 100%;
@@ -72,6 +79,15 @@
   position: absolute;
   inset: 0%;
   display: block;
+}
+
+.location_map-embed--tilted {
+  width: 118%;
+  height: 128%;
+  left: -9%;
+  top: -4%;
+  transform: rotateX(52deg);
+  transform-origin: 50% 100%;
 }
 
 .legally-version-badge {

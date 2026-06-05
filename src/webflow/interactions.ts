@@ -469,31 +469,106 @@ function initImageReveal(root: ParentNode) {
 }
 
 const LOCATION_SATELLITE_MAPS = [
-  { tab: "Tab 1", label: "New York City, NY", lat: 40.7506, lng: -73.997 },
-  { tab: "Tab 2", label: "Los Angeles, CA", lat: 34.0522, lng: -118.2437 },
-  { tab: "Tab 3", label: "Chicago, IL", lat: 41.8781, lng: -87.6298 },
+  { tab: "Tab 1", label: "New York City, NY", lat: 40.7506, lng: -73.997, heading: 32 },
+  { tab: "Tab 2", label: "Los Angeles, CA", lat: 34.0522, lng: -118.2437, heading: 48 },
+  { tab: "Tab 3", label: "Chicago, IL", lat: 41.8781, lng: -87.6298, heading: 22 },
 ] as const;
 
-function buildSatelliteMapSrc(lat: number, lng: number) {
-  return `https://www.google.com/maps?q=${lat},${lng}&hl=en&z=18&t=k&output=embed`;
+const MAP_CAMERA_RANGE = 3600;
+const MAP_CAMERA_TILT = 67;
+const MAP_FALLBACK_ZOOM = 16;
+
+type LocationMapEntry = (typeof LOCATION_SATELLITE_MAPS)[number];
+
+let maps3dLoader: Promise<void> | null = null;
+
+function loadGoogleMaps3d(apiKey: string) {
+  if (maps3dLoader) return maps3dLoader;
+
+  maps3dLoader = new Promise((resolve, reject) => {
+    if (document.querySelector('script[data-legally-maps3d="true"]')) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.dataset.legallyMaps3d = "true";
+    script.async = true;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=maps3d&v=beta`;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Google Maps 3D"));
+    document.head.appendChild(script);
+  });
+
+  return maps3dLoader;
 }
 
-function initLocationMaps(root: ParentNode) {
+function buildSatelliteMapSrc(lat: number, lng: number) {
+  return `https://www.google.com/maps?q=${lat},${lng}&hl=en&z=${MAP_FALLBACK_ZOOM}&t=k&output=embed`;
+}
+
+function createMap3dElement(location: LocationMapEntry) {
+  const map = document.createElement("gmp-map-3d");
+  map.className = "location_map-embed";
+  map.setAttribute("mode", "SATELLITE");
+  map.setAttribute("center", `${location.lat},${location.lng},0`);
+  map.setAttribute("range", String(MAP_CAMERA_RANGE));
+  map.setAttribute("tilt", String(MAP_CAMERA_TILT));
+  map.setAttribute("heading", String(location.heading));
+  map.setAttribute("default-ui-hidden", "");
+  map.setAttribute("gesture-handling", "cooperative");
+  map.title = `Satellite map of ${location.label}`;
+  return map;
+}
+
+function createTiltedFallbackMap(location: LocationMapEntry) {
+  const wrap = document.createElement("div");
+  wrap.className = "location_map-tilt-wrap";
+
+  const iframe = document.createElement("iframe");
+  iframe.className = "location_map-embed location_map-embed--tilted";
+  iframe.setAttribute("loading", "lazy");
+  iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
+  iframe.setAttribute("allowfullscreen", "");
+  iframe.title = `Satellite map of ${location.label}`;
+  iframe.src = buildSatelliteMapSrc(location.lat, location.lng);
+
+  wrap.appendChild(iframe);
+  return wrap;
+}
+
+async function initLocationMaps(root: ParentNode) {
+  const replacements: {
+    target: Element;
+    location: LocationMapEntry;
+  }[] = [];
+
   root.querySelectorAll<HTMLElement>(".location_map.w-tab-pane").forEach((pane) => {
     const tab = pane.getAttribute("data-w-tab");
     const location = LOCATION_SATELLITE_MAPS.find((entry) => entry.tab === tab);
-    const image = pane.querySelector("img");
-    if (!location || !image) return;
-
-    const iframe = document.createElement("iframe");
-    iframe.className = "location_map-embed";
-    iframe.setAttribute("loading", "lazy");
-    iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
-    iframe.setAttribute("allowfullscreen", "");
-    iframe.title = `Satellite map of ${location.label}`;
-    iframe.src = buildSatelliteMapSrc(location.lat, location.lng);
-    image.replaceWith(iframe);
+    const target = pane.querySelector("img, iframe, gmp-map-3d, .location_map-tilt-wrap");
+    if (!location || !target) return;
+    replacements.push({ target, location });
   });
+
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  if (apiKey) {
+    try {
+      await loadGoogleMaps3d(apiKey);
+      await customElements.whenDefined("gmp-map-3d");
+      for (const { target, location } of replacements) {
+        target.replaceWith(createMap3dElement(location));
+      }
+      return;
+    } catch {
+      // Fall back to tilted satellite iframe embed.
+    }
+  }
+
+  for (const { target, location } of replacements) {
+    target.replaceWith(createTiltedFallbackMap(location));
+  }
 }
 
 export function initWebflowInteractions(root: ParentNode) {
@@ -504,7 +579,7 @@ export function initWebflowInteractions(root: ParentNode) {
   initHomeLinks(root);
   initAnchorLinks(root);
   initTabs(root);
-  initLocationMaps(root);
+  void initLocationMaps(root);
   initSliders(root);
   initLoopMarquee(root);
   initMobileNav(root);
