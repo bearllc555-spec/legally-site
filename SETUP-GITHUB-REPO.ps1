@@ -13,11 +13,11 @@ Start-Process $CreateUrl
 Write-Host "Create the empty repo in your browser, then come back here." -ForegroundColor Yellow
 Write-Host "Waiting for https://github.com/$Repo ..." -ForegroundColor Yellow
 
-$pat = (git -C "$Root" remote get-url origin 2>$null) -match 'x-access-token:([^@]+)@'
-if (-not $pat) {
-  $pat = (git -C "c:\Users\thede\OneDrive\Documents\001-cloudflare\004-vacation-homes" remote get-url origin) -replace '^https://x-access-token:([^@]+)@.*','$1'
-} else {
+$originUrl = git -C "$Root" remote get-url origin 2>$null
+if ($originUrl -match 'x-access-token:([^@]+)@') {
   $pat = $Matches[1]
+} else {
+  $pat = (gh auth token).Trim()
 }
 
 $headers = @{ Authorization = "token $pat"; Accept = "application/vnd.github+json" }
