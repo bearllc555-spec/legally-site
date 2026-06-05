@@ -1,42 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --tpl-bg: #f4efe6;
-  --tpl-ink: #14202b;
-  --tpl-muted: #5a6473;
-  --tpl-line: #dcd3c2;
-  --tpl-card: #fbf8f1;
-  --tpl-accent: #8b6b3f;
-  --tpl-accent-ink: #fbf8f1;
-  --tpl-accent-soft: #e8dfcb;
-  --tpl-font-display: "Cormorant Garamond", Georgia, serif;
-  --tpl-font-body: "Source Sans 3", system-ui, sans-serif;
-}
+@import url("/css/webflow.css");
 
 html,
 body,
 #root {
   margin: 0;
   min-height: 100%;
-}
-
-body {
-  background-color: var(--tpl-bg);
-  color: var(--tpl-ink);
-  font-family: var(--tpl-font-body);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.legally-dropcap::first-letter {
-  font-family: var(--tpl-font-display);
-  font-weight: 600;
-  font-size: 4.5em;
-  line-height: 0.92;
-  color: var(--tpl-accent);
-  float: left;
-  padding-right: 0.12em;
-  margin-top: 0.06em;
 }
