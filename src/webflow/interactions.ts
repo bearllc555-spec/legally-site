@@ -489,7 +489,7 @@ const LOCATION_MAPS = [
 type LocationMapEntry = (typeof LOCATION_MAPS)[number];
 
 function buildMapEmbedUrl(address: string) {
-  return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=17&ie=UTF8&t=k&output=embed`;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=15&ie=UTF8&t=k&output=embed`;
 }
 
 function createNightAtlasMap(location: LocationMapEntry) {
