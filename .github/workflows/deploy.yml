@@ -33,9 +33,6 @@ jobs:
               echo "VITE_SITE_URL=https://${{ github.ref_name }}.legally-design.pages.dev" >> "$GITHUB_ENV"
               ;;
           esac
-          if [ -n "${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}" ]; then
-            echo "VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}" >> "$GITHUB_ENV"
-          fi
 
       - name: Install dependencies
         run: npm ci

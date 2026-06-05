@@ -468,107 +468,78 @@ function initImageReveal(root: ParentNode) {
   window.addEventListener("resize", onScroll);
 }
 
-const LOCATION_SATELLITE_MAPS = [
-  { tab: "Tab 1", label: "New York City, NY", lat: 40.7506, lng: -73.997, heading: 32 },
-  { tab: "Tab 2", label: "Los Angeles, CA", lat: 34.0522, lng: -118.2437, heading: 48 },
-  { tab: "Tab 3", label: "Chicago, IL", lat: 41.8781, lng: -87.6298, heading: 22 },
+const LOCATION_MAPS = [
+  {
+    tab: "Tab 1",
+    label: "New York City, NY",
+    address: "111 Legal Avenue, Suite 456, New York, NY 10001",
+  },
+  {
+    tab: "Tab 2",
+    label: "Los Angeles, CA",
+    address: "789 Justice Blvd, Floor 3, Los Angeles, CA 90001",
+  },
+  {
+    tab: "Tab 3",
+    label: "Chicago, IL",
+    address: "456 Law Street, Suite 101, Chicago, IL 60601",
+  },
 ] as const;
 
-const MAP_CAMERA_RANGE = 3600;
-const MAP_CAMERA_TILT = 67;
-const MAP_FALLBACK_ZOOM = 16;
+type LocationMapEntry = (typeof LOCATION_MAPS)[number];
 
-type LocationMapEntry = (typeof LOCATION_SATELLITE_MAPS)[number];
-
-let maps3dLoader: Promise<void> | null = null;
-
-function loadGoogleMaps3d(apiKey: string) {
-  if (maps3dLoader) return maps3dLoader;
-
-  maps3dLoader = new Promise((resolve, reject) => {
-    if (document.querySelector('script[data-legally-maps3d="true"]')) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.dataset.legallyMaps3d = "true";
-    script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=maps3d&v=beta`;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Google Maps 3D"));
-    document.head.appendChild(script);
-  });
-
-  return maps3dLoader;
+function buildMapEmbedUrl(address: string) {
+  return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=17&ie=UTF8&t=k&output=embed`;
 }
 
-function buildSatelliteMapSrc(lat: number, lng: number) {
-  return `https://www.google.com/maps?q=${lat},${lng}&hl=en&z=${MAP_FALLBACK_ZOOM}&t=k&output=embed`;
-}
-
-function createMap3dElement(location: LocationMapEntry) {
-  const map = document.createElement("gmp-map-3d");
-  map.className = "location_map-embed";
-  map.setAttribute("mode", "SATELLITE");
-  map.setAttribute("center", `${location.lat},${location.lng},0`);
-  map.setAttribute("range", String(MAP_CAMERA_RANGE));
-  map.setAttribute("tilt", String(MAP_CAMERA_TILT));
-  map.setAttribute("heading", String(location.heading));
-  map.setAttribute("default-ui-hidden", "");
-  map.setAttribute("gesture-handling", "cooperative");
-  map.title = `Satellite map of ${location.label}`;
-  return map;
-}
-
-function createTiltedFallbackMap(location: LocationMapEntry) {
-  const wrap = document.createElement("div");
-  wrap.className = "location_map-tilt-wrap";
+function createNightAtlasMap(location: LocationMapEntry) {
+  const stage = document.createElement("div");
+  stage.className = "map-stage";
 
   const iframe = document.createElement("iframe");
-  iframe.className = "location_map-embed location_map-embed--tilted";
+  iframe.className = "map-iframe";
+  iframe.title = `${location.label} office location`;
+  iframe.src = buildMapEmbedUrl(location.address);
   iframe.setAttribute("loading", "lazy");
   iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
   iframe.setAttribute("allowfullscreen", "");
-  iframe.title = `Satellite map of ${location.label}`;
-  iframe.src = buildSatelliteMapSrc(location.lat, location.lng);
 
-  wrap.appendChild(iframe);
-  return wrap;
+  const grid = document.createElement("div");
+  grid.className = "map-grid-overlay";
+  grid.setAttribute("aria-hidden", "true");
+
+  const vignette = document.createElement("div");
+  vignette.className = "map-vignette";
+  vignette.setAttribute("aria-hidden", "true");
+
+  const horizon = document.createElement("div");
+  horizon.className = "map-horizon";
+  horizon.setAttribute("aria-hidden", "true");
+
+  const pinWrap = document.createElement("div");
+  pinWrap.className = "map-pin-wrap";
+  pinWrap.setAttribute("aria-hidden", "true");
+  pinWrap.innerHTML = `
+    <span class="map-pin-pulse"></span>
+    <span class="map-pin-dot">
+      <span class="map-pin-dot-glow"></span>
+      <span class="map-pin-dot-core"></span>
+    </span>
+    <span class="map-pin-stem"></span>
+  `;
+
+  stage.append(iframe, grid, vignette, horizon, pinWrap);
+  return stage;
 }
 
-async function initLocationMaps(root: ParentNode) {
-  const replacements: {
-    target: Element;
-    location: LocationMapEntry;
-  }[] = [];
-
+function initLocationMaps(root: ParentNode) {
   root.querySelectorAll<HTMLElement>(".location_map.w-tab-pane").forEach((pane) => {
     const tab = pane.getAttribute("data-w-tab");
-    const location = LOCATION_SATELLITE_MAPS.find((entry) => entry.tab === tab);
-    const target = pane.querySelector("img, iframe, gmp-map-3d, .location_map-tilt-wrap");
+    const location = LOCATION_MAPS.find((entry) => entry.tab === tab);
+    const target = pane.querySelector("img, iframe, gmp-map-3d, .location_map-tilt-wrap, .map-stage");
     if (!location || !target) return;
-    replacements.push({ target, location });
+    target.replaceWith(createNightAtlasMap(location));
   });
-
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-  if (apiKey) {
-    try {
-      await loadGoogleMaps3d(apiKey);
-      await customElements.whenDefined("gmp-map-3d");
-      for (const { target, location } of replacements) {
-        target.replaceWith(createMap3dElement(location));
-      }
-      return;
-    } catch {
-      // Fall back to tilted satellite iframe embed.
-    }
-  }
-
-  for (const { target, location } of replacements) {
-    target.replaceWith(createTiltedFallbackMap(location));
-  }
 }
 
 export function initWebflowInteractions(root: ParentNode) {
@@ -579,7 +550,7 @@ export function initWebflowInteractions(root: ParentNode) {
   initHomeLinks(root);
   initAnchorLinks(root);
   initTabs(root);
-  void initLocationMaps(root);
+  initLocationMaps(root);
   initSliders(root);
   initLoopMarquee(root);
   initMobileNav(root);
