@@ -65,6 +65,15 @@
   opacity: 1;
 }
 
+.location_map-embed {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0%;
+  display: block;
+}
+
 .legally-version-badge {
   position: fixed;
   top: 0.9rem;

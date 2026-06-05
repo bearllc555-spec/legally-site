@@ -468,6 +468,34 @@ function initImageReveal(root: ParentNode) {
   window.addEventListener("resize", onScroll);
 }
 
+const LOCATION_SATELLITE_MAPS = [
+  { tab: "Tab 1", label: "New York City, NY", lat: 40.7506, lng: -73.997 },
+  { tab: "Tab 2", label: "Los Angeles, CA", lat: 34.0522, lng: -118.2437 },
+  { tab: "Tab 3", label: "Chicago, IL", lat: 41.8781, lng: -87.6298 },
+] as const;
+
+function buildSatelliteMapSrc(lat: number, lng: number) {
+  return `https://www.google.com/maps?q=${lat},${lng}&hl=en&z=18&t=k&output=embed`;
+}
+
+function initLocationMaps(root: ParentNode) {
+  root.querySelectorAll<HTMLElement>(".location_map.w-tab-pane").forEach((pane) => {
+    const tab = pane.getAttribute("data-w-tab");
+    const location = LOCATION_SATELLITE_MAPS.find((entry) => entry.tab === tab);
+    const image = pane.querySelector("img");
+    if (!location || !image) return;
+
+    const iframe = document.createElement("iframe");
+    iframe.className = "location_map-embed";
+    iframe.setAttribute("loading", "lazy");
+    iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
+    iframe.setAttribute("allowfullscreen", "");
+    iframe.title = `Satellite map of ${location.label}`;
+    iframe.src = buildSatelliteMapSrc(location.lat, location.lng);
+    image.replaceWith(iframe);
+  });
+}
+
 export function initWebflowInteractions(root: ParentNode) {
   resetWebflowAnimationStates(root);
   initHeaderTextReveal(root);
@@ -476,6 +504,7 @@ export function initWebflowInteractions(root: ParentNode) {
   initHomeLinks(root);
   initAnchorLinks(root);
   initTabs(root);
+  initLocationMaps(root);
   initSliders(root);
   initLoopMarquee(root);
   initMobileNav(root);
