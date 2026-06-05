@@ -492,7 +492,7 @@ function buildMapEmbedUrl(address: string) {
   return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&hl=en&z=15&ie=UTF8&t=k&output=embed`;
 }
 
-function createNightAtlasMap(location: LocationMapEntry) {
+function createLocationMap(location: LocationMapEntry) {
   const stage = document.createElement("div");
   stage.className = "map-stage";
 
@@ -504,31 +504,7 @@ function createNightAtlasMap(location: LocationMapEntry) {
   iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
   iframe.setAttribute("allowfullscreen", "");
 
-  const grid = document.createElement("div");
-  grid.className = "map-grid-overlay";
-  grid.setAttribute("aria-hidden", "true");
-
-  const vignette = document.createElement("div");
-  vignette.className = "map-vignette";
-  vignette.setAttribute("aria-hidden", "true");
-
-  const horizon = document.createElement("div");
-  horizon.className = "map-horizon";
-  horizon.setAttribute("aria-hidden", "true");
-
-  const pinWrap = document.createElement("div");
-  pinWrap.className = "map-pin-wrap";
-  pinWrap.setAttribute("aria-hidden", "true");
-  pinWrap.innerHTML = `
-    <span class="map-pin-pulse"></span>
-    <span class="map-pin-dot">
-      <span class="map-pin-dot-glow"></span>
-      <span class="map-pin-dot-core"></span>
-    </span>
-    <span class="map-pin-stem"></span>
-  `;
-
-  stage.append(iframe, grid, vignette, horizon, pinWrap);
+  stage.append(iframe);
   return stage;
 }
 
@@ -538,7 +514,7 @@ function initLocationMaps(root: ParentNode) {
     const location = LOCATION_MAPS.find((entry) => entry.tab === tab);
     const target = pane.querySelector("img, iframe, gmp-map-3d, .location_map-tilt-wrap, .map-stage");
     if (!location || !target) return;
-    target.replaceWith(createNightAtlasMap(location));
+    target.replaceWith(createLocationMap(location));
   });
 }
 

@@ -65,11 +65,9 @@
   opacity: 1;
 }
 
-/* Night-atlas map treatment (matches nyc-design) */
 .location_map .map-stage {
   position: absolute;
   inset: 0%;
-  isolation: isolate;
   overflow: hidden;
 }
 
@@ -79,126 +77,6 @@
   width: 100%;
   height: 100%;
   border: 0;
-  transform: scale(1.08);
-  transform-origin: center 42%;
-  filter: saturate(0.35) contrast(1.25) brightness(0.55) hue-rotate(195deg);
-}
-
-.location_map .map-grid-overlay {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mix-blend-mode: overlay;
-}
-
-.location_map .map-vignette {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 85% 75% at 50% 42%,
-    transparent 0%,
-    rgba(0, 0, 0, 0.35) 55%,
-    rgba(0, 0, 0, 0.92) 100%
-  );
-}
-
-.location_map .map-horizon {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 58%,
-    rgba(0, 0, 0, 0.88) 100%
-  );
-}
-
-.location_map .map-pin-wrap {
-  pointer-events: none;
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  z-index: 10;
-  transform: translate(-50%, -100%);
-}
-
-.location_map .map-pin-pulse {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
-  animation: legally-map-pin-pulse 2.8s ease-out infinite;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, transparent 70%);
-}
-
-.location_map .map-pin-dot {
-  position: relative;
-  display: flex;
-  width: 1rem;
-  height: 1rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.55);
-}
-
-.location_map .map-pin-dot-glow {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
-  filter: blur(4px);
-}
-
-.location_map .map-pin-dot-core {
-  position: relative;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: #fff;
-}
-
-.location_map .map-pin-stem {
-  display: block;
-  width: 1px;
-  height: 2.5rem;
-  margin: 0.25rem auto 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), transparent);
-}
-
-@keyframes legally-map-pin-pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(0.35);
-    opacity: 0.9;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .location_map .map-pin-pulse {
-    animation: none;
-    opacity: 0.4;
-  }
-
-  .location_map .map-iframe {
-    transform: none;
-  }
 }
 
 .legally-version-badge {
